@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards — Ensino Médio 📚</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container-principal {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+        }
+
+        /* 📋 Área de Seleção de Matérias */
+        .seletor-materia {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-bottom: 35px;
+        }
+
+        .seletor-materia h2 {
+            font-size: 1.2rem;
+            color: #444;
+            margin-bottom: 15px;
+        }
+
+        .botoes-materias {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .botao-materia {
+            padding: 10px 18px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .botao-materia:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .botao-materia.ativo {
+            background: #667eea;
+            color: white;
+        }
+
+        .botoes-acao {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .botao-acao {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #btn-mostrar {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        #btn-mostrar:hover {
+            transform: scale(1.05);
+        }
+
+        #btn-embaralhar {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        #btn-embaralhar:hover {
+            background: #e0e0e0;
+        }
+
+        /* 🃏 Área dos Cartões */
+        .area-cartoes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+        }
+
+        .mensagem-vazia {
+            background: rgba(255,255,255,0.9);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        /* Cartão */
+        .cartao {
+            width: 320px;
+            height: 200px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .cartao__interno {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            border-radius: 16px;
+        }
+
+        .cartao.virado .cartao__interno {
+            transform: rotateY(180deg);
+        }
+
+        .cartao-frente, .cartao-verso {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cartao-frente {
+            background: white;
+        }
+
+        .etiqueta-materia {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-bottom: 12px;
+        }
+
+        .cartao-frente h3 {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .cartao-frente p {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .cartao-verso {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .cartao-verso p {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .dica {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-principal">
+    <h1>📚 Flashcards — Ensino Médio</h1>
+    <p class="subtitulo">Selecione as matérias e estude!</p>
+
+    <!-- 📋 Seletor de Matérias -->
+    <div class="seletor-materia">
+        <h2>Selecione a(s) matéria(s):</h2>
+        <div class="botoes-materias" id="botoes-materias">
+            <button class="botao-materia" data-materia="todas">📖 Todas</button>
+            <button class="botao-materia" data-materia="matemática">🔢 Matemática</button>
+            <button class="botao-materia" data-materia="português">📝 Português</button>
+            <button class="botao-materia" data-materia="ciências">🔬 Ciências</button>
+            <button class="botao-materia" data-materia="história">📜 História</button>
+            <button class="botao-materia" data-materia="geografia">🌍 Geografia</button>
+            <button class="botao-materia" data-materia="inglês">🔤 Inglês</button>
+            <button class="botao-materia" data-materia="filosofia">🧠 Filosofia</button>
+            <button class="botao-materia" data-materia="química">⚗️ Química</button>
+            <button class="botao-materia" data-materia="física">⚛️ Física</button>
+            <button class="botao-materia" data-materia="artes">🎨 Artes</button>
+        </div>
+        <div class="botoes-acao">
+            <button class="botao-acao" id="btn-mostrar">✅ Mostrar Cartões</button>
+            <button class="botao-acao" id="btn-embaralhar">🔀 Embaralhar</button>
+        </div>
+    </div>
+
+    <!-- 🃏 Área dos Cartões -->
+    <div class="area-cartoes" id="area-cartoes">
+        <div class="mensagem-vazia">
+            👆 Selecione uma matéria acima e clique em "Mostrar Cartões" para começar a estudar!
+        </div>
+    </div>
+</div>
+
+<script>
+// 📚 BANCO DE FLASHCARDS — Ensino Médio
+const todosCartoes = [
+    // 🔢 MATEMÁTICA
+    { materia: 'matemática', pergunta: 'Qual é a fórmula da área de um triângulo?', resposta: 'Área = (base × altura) ÷ 2' },
+    { materia: 'matemática', pergunta: 'O que é um número primo?', resposta: 'É um número natural maior que 1, divisível apenas por 1 e por ele mesmo.' },
+    { materia: 'matemática', pergunta: 'Qual é a fórmula de Bhaskara?', resposta: 'x = [-b ± √(b² - 4ac)] ÷ 2a' },
+    { materia: 'matemática', pergunta: 'Quanto vale π aproximadamente?', resposta: '3,14159...' },
+
+    // 📝 PORTUGUÊS
+    { materia: 'português', pergunta: 'Qual é a diferença entre homófonos e homógrafos?', resposta: 'Homófonos = mesma pronúncia, escrita diferente. Homógrafos = mesma escrita, pronúncia/ideia diferente.' },
+    { materia: 'português', pergunta: 'O que é uma oração subordinada?', resposta: 'Depende de outra oração para ter sentido completo.' },
+    { materia: 'português', pergunta: 'Quais são os 3 tempos verbais principais?', resposta: 'Passado, presente e futuro.' },
+
+    // 🔬 CIÊNCIAS
+    { materia: 'ciências', pergunta: 'Quais são os 3 estados da matéria?', resposta: 'Sólido, líquido e gasoso.' },
+    { materia: 'ciências', pergunta: 'O que é fotossíntese?', resposta: 'Processo pelo qual as plantas produzem seu próprio alimento usando luz solar.' },
+    { materia: 'ciências', pergunta: 'Qual é o menor componente da matéria?', resposta: 'O átomo.' },
+
+    // 📜 HISTÓRIA
+    { materia: 'história', pergunta: 'Quando ocorreu a Independência do Brasil?', resposta: '7 de setembro de 1822.' },
+    { materia: 'história', pergunta: 'O que foi a Revolução Industrial?', resposta: 'Mudança de produção manual para produção com máquinas, iniciada no século XVIII.' },
+    { materia: 'história', pergunta: 'Quem foi o primeiro presidente do Brasil?', resposta: 'Marechal Deodoro da Fonseca.' },
+
+    // 🌍 GEOGRAFIA
+    { materia: 'geografia', pergunta: 'Quais são os 5 continentes?', resposta: 'América, Europa, Ásia, África e Oceania.' },
+    { materia: 'geografia', pergunta: 'O que é latitude e longitude?', resposta: 'Latitude = distância em graus do Equador. Longitude = distância em graus de Greenwich.' },
+    { materia: 'geografia', pergunta: 'Qual é o maior rio do mundo em volume de água?', resposta: 'Rio Amazonas.' },
+
+    // 🔤 INGLÊS
+    { materia: 'inglês', pergunta: 'Qual é a diferença entre "there is" e "there are"?', resposta: 'There is = singular. There are = plural.' },
+    { materia: 'inglês', pergunta: 'Como formar o passado simples dos verbos regulares?', resposta: 'Adiciona-se -ed no final do verbo.' },
+    { materia: 'inglês', pergunta: 'O que significa "to be"?', resposta: 'Ser ou estar.' },
+
+    // 🧠 FILOSOFIA
+    { materia: 'filosofia', pergunta: 'Quem é considerado o pai da filosofia ocidental?', resposta: 'Sócrates.' },
+    { materia: 'filosofia', pergunta: 'O que é o pensamento crítico?', resposta: 'Analisar informações com lógica e questionar, em vez de aceitar sem refletir.' },
+
+    // ⚗️ QUÍMICA
+    { materia: 'química', pergunta: 'O que é uma mistura homogênea?', resposta: 'Não dá para ver os componentes separados. Exemplo: água + sal.' },
+    { materia: 'química', pergunta: 'O que é um elemento químico?', resposta: 'Conjunto de átomos com o mesmo número de prótons.' },
+
+    // ⚛️ FÍSICA
+    { materia: 'física', pergunta: 'Qual é a 1ª Lei de Newton?', resposta: 'Princípio da Inércia — os corpos tendem a permanecer em seu estado de movimento.' },
+    { materia: 'física', pergunta: 'O que é velocidade média?', resposta: 'Espaço percorrido dividido pelo tempo gasto.' },
+
+    // 🎨 ARTES
+    { materia: 'artes', pergunta: 'Quais são as 3 cores primárias?', resposta: 'Vermelho, amarelo e azul.' },
+    { materia: 'artes', pergunta: 'O que é perspectiva?', resposta: 'Técnica de representar objetos tridimensionais em uma superfície plana.' },
+];
+
+// Estado do aplicativo
+let materiasSelecionadas = new Set();
+let cartoesExibidos = [];
+
+// 🎯 Botões de Matéria
+document.querySelectorAll('.botao-materia').forEach(botao => {
+    botao.addEventListener('click', () => {
+        const materia = botao.dataset.materia;
+        
+        if (materia === 'todas') {
+            // Seleciona/Deseleciona todas
+            const todas = document.querySelectorAll('.botao-materia');
+            const todasAtivas = botao.classList.contains('ativo');
+            
+            todas.forEach(b => {
+                if (b.dataset.materia !== 'todas') {
+                    if (!todasAtivas) b.classList.add('ativo');
+                    else b.classList.remove('ativo');
+                }
+            });
+            botao.classList.toggle('ativo');
+            
+            if (!todasAtivas) {
+                materiasSelecionadas = new Set(todosCartoes.map(c => c.materia));
+            } else {
+                materiasSelecionadas.clear();
+            }
+        } else {
+            // Alterna matéria individual
+            botao.classList.toggle('ativo');
+            if (botao.classList.contains('ativo')) {
+                materiasSelecionadas.add(materia);
+                document.querySelector('[data-materia="todas"]').classList.remove('ativo');
+            } else {
+                materiasSelecionadas.delete(materia);
+            }
+        }
+    });
+});
+
+// 📋 Mostrar Cartões
+document.getElementById('btn-mostrar').addEventListener('click', () => {
+    if (materiasSelecionadas.size === 0) {
+        alert('⚠️ Selecione pelo menos uma matéria!');
+        return;
+    }
+    
+    cartoesExibidos = todosCartoes.filter(cartao => 
+        materiasSelecionadas.has(cartao.materia)
+    );
+    
+    renderizarCartoes();
+});
+
+// 🔀 Embaralhar
+document.getElementById('btn-embaralhar').addEventListener('click', () => {
+    if (cartoesExibidos.length === 0) {
+        alert('⚠️ Selecione uma matéria e clique em "Mostrar Cartões" primeiro!');
+        return;
+    }
+    
+    cartoesExibidos = cartoesExibidos.sort(() => Math.random() - 0.5);
+    renderizarCartoes();
+});
+
+// 🖼️ Renderizar os cartões na tela
+function renderizarCartoes() {
+    const area = document.getElementById('area-cartoes');
+    area.innerHTML = '';
+    
+    cartoesExibidos.forEach((cartao, indice) => {
+        const div = document.createElement('div');
+        div.className = 'cartao';
+        div.setAttribute('aria-label', `Cartão ${indice + 1}: ${cartao.pergunta}`);
+        
+        div.innerHTML = `
+            <div class="cartao__interno">
+                <div class="cartao-frente">
+                    <span class="etiqueta-materia">${formatarMateria(cartao.materia)}</span>
+                    <h3>Pergunta ${indice + 1}</h3>
+                    <p>${cartao.pergunta}</p>
+                    <span class="dica">👆 Clique para virar</span>
+                </div>
+                <div class="cartao-verso">
+                    <p><strong>Resposta:</strong><br><br>${cartao.resposta}</p>
+                </div>
+            </div>
+        `;
+        
+        div.addEventListener('click', () => {
+            div.classList.toggle('virado');
+        });
+        
+        area.appendChild(div);
+    });
+}
+
+// 🏷️ Formatar nome da matéria
+function formatarMateria(materia) {
+    const icones = {
+        'matemática': '🔢 Matemática',
+        'português': '📝 Português',
+        'ciências': '🔬 Ciências',
+        'história': '📜 História',
+        'geografia': '🌍 Geografia',
+        'inglês': '🔤 Inglês',
+        'filosofia': '🧠 Filosofia',
+        'química': '⚗️ Química',
+        'física': '⚛️ Física',
+        'artes': '🎨 Artes'
+    };
+    return icones[materia] || materia;
+}
+</script>
+
+</body>
+</html>
